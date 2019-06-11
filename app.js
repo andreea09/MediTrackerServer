@@ -57,7 +57,8 @@ app.post('/create', function(req, res) {
   	    parola = req.body.parola;
 
   	var con = mysql.createConnection({
-	  host: "34.65.30.185",
+	  //host: "34.65.30.185", // This does not work on App Engine
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
 	  user: "server",
 	  password: "sherlock2014",
 	  database: "spital"
