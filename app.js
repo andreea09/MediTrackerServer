@@ -53,8 +53,12 @@ app.post('/create', function(req, res) {
   		cnp = req.body.cnp,
   		data_angajare = new Date().yyyymmdd(),
   		pozitie = req.body.pozitie,
-  	    parola = req.body.parola;
+  	    parola = req.body.parola,
   	    sectie = req.body.sectie;
+
+  	if (data_angajare == 'NaN-NaN-NaN' || data_nastere == 'NaN-NaN-NaN'){
+  		res.json({result: "Detalii Invalide"});
+  	}
 
   	var con = mysql.createConnection({
 	  //host: "34.65.30.185", // This does not work on App Engine
@@ -69,15 +73,24 @@ app.post('/create', function(req, res) {
 	  console.log("Connected!");
 	});
 
-	var sql = "INSERT INTO angajati (nume, prenume, data_nastere, sex, adresa, telefon, email, CNP, data_angajare, pozitie, parola, sectie) values (\"" + nume + "\",\"" + prenume + "\",\"" + data_nastere + "\",\"" + sex + "\",\"" + adresa + "\",\"" + telefon + "\",\"" + email + "\",\"" + cnp + "\",\"" + data_angajare + "\",\"" + pozitie + "\",\"" + parola + "\",\"" + sectie + "\")";
-	console.log(sql);
+	var sql = "SELECT email FROM angajati where email = \"" + email +"\"";
+	con.query(sql, function(err, result) {
+		if (err) throw err;
+		console.log("Verificare existenta");
+		if (result.length == 0){
+			sql = "INSERT INTO angajati (nume, prenume, data_nastere, sex, adresa, telefon, email, CNP, data_angajare, pozitie, parola, sectie) values (\"" + nume + "\",\"" + prenume + "\",\"" + data_nastere + "\",\"" + sex + "\",\"" + adresa + "\",\"" + telefon + "\",\"" + email + "\",\"" + cnp + "\",\"" + data_angajare + "\",\"" + pozitie + "\",\"" + parola + "\",\"" + sectie + "\")";
+			console.log(sql);
+			
+			con.query(sql, function (err, result) {
+			    if (err) throw err;
+			    console.log("Result: " + result);
+			    res.json({result: "Succes"});
+			  });
+		} else {
+			res.json({result: "Email deja utilizat"});
+		}
+	})
 
-	
-	con.query(sql, function (err, result) {
-	    if (err) throw err;
-	    console.log("Result: " + result);
-	    res.json({result: "Succes"});
-	  });
 
 })
 
@@ -94,9 +107,9 @@ app.post('/login_angajat', function(req, res) {
 	});
 
 	con.connect(function(err) {
-		  if (err) throw err;
-		  console.log("Connected!");
-		});
+		if (err) throw err;
+		console.log("Connected!");
+	});
 
 
 	var sql = "SELECT * FROM administratori where email = \"" + email +"\" AND parola=\"" + parola + "\"";
@@ -127,4 +140,111 @@ app.post('/login_angajat', function(req, res) {
 			});
 	    } else res.json( {result: result} );
 	});
+})
+
+app.post('/pacient/cautare', function(req, res) {
+	var nume = req.body.nume,
+		prenume = req.body.prenume;
+
+
+	var con = mysql.createConnection({
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+		if (err) throw err;
+		console.log("Connected!");
+	});
+
+	var sql = "SELECT * FROM pacienti where nume = \"" + nume +"\" AND prenume=\"" + prenume + "\"";
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    console.log("Result: " + result.length);
+	    if (result.length == 0) res.json({result: 'inexistent'});
+	    else { res.json( {result: result} );}
+	});
+})
+
+app.post('/pacient/diagnostic/creare', function(req, res){
+	var pacientID = req.body.pacientID,
+		angajatID = req.body.angajatID,
+		descriere = req.body.descriere,
+		durata = req.body.durata,
+		indicatii_suplimentare = req.body.indicatii_suplimentare,
+		incepere_tratament = new Date(req.body.incepere_tratament).yyyymmdd();
+
+
+	var con = mysql.createConnection({
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+		if (err) throw err;
+		console.log("Connected!");
+	});
+
+	// Adauga noul diagnostic, fara tratamentID
+	var sql = "INSERT INTO diagnostice (angajatID, descriere, pacientID) values (\"" + angajatID + "\",\"" + descriere + "\",\"" + pacientID + "\")";
+	console.log(sql);
+	
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    console.log("Diagnostic adaugat.");
+	});
+
+	// Recupereaza IDul diagnosticului nou generat
+	sql = "SELECT * FROM diagnostice where angajatID = \"" + angajatID + "\" AND descriere=\"" + descriere  + "\" AND pacientID=\"" + pacientID + "\"";
+	console.log(sql);
+
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    var result_json = JSON.stringify(result).slice(1);
+	    result_json = result_json.slice(0, result_json.length - 1);
+	    result_json = JSON.parse(result_json);
+	    console.log("Result: " + result_json.diagnosticID);
+
+	    var diagnosticID = result_json.diagnosticID;
+
+	    // Adauga tratamentul pentru diagnostic, folosind diagnosticID
+		sql = "INSERT INTO tratamente (diagnosticID, angajatID, indicatii_suplimentare, pacientID, durata, incepere_tratament) values (\"" + diagnosticID + "\",\"" + angajatID + "\",\"" + indicatii_suplimentare + "\",\"" + pacientID + "\",\"" + durata + "\",\"" + incepere_tratament + "\")";
+		console.log(sql);
+		
+		con.query(sql, function (err, result) {
+		    if (err) throw err;
+		    var result_json = JSON.stringify(result);
+		    console.log("Result: " + result_json);
+		});
+
+		// Recupereaza IDul tratamentului nou generat
+		sql = "SELECT * FROM tratamente where angajatID = \"" + angajatID + "\" AND pacientID=\"" + pacientID + "\" AND diagnosticID=\"" + diagnosticID + "\"";
+		console.log(sql);
+
+		con.query(sql, function (err, result) {
+		    if (err) throw err;
+
+		    var result_json = JSON.stringify(result).slice(1);
+		    result_json = result_json.slice(0, result_json.length - 1);
+		    result_json = JSON.parse(result_json);
+		    console.log("Result: " + result_json.tratamentID);
+			var tratamentID = result_json.tratamentID;
+
+			// Adauga tratamentID diagnosticului adaugat inainte
+			sql = "UPDATE diagnostice SET tratamentID = \"" + tratamentID + "\"";
+			console.log(sql);
+
+			con.query(sql, function (err, result) {
+			    if (err) throw err;
+			    var result_json = JSON.stringify(result);
+			    console.log("Result: " + result_json);
+			    res.json({result: "Succes"});
+			});
+		});
+	});
+
 })
