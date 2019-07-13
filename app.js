@@ -42,7 +42,6 @@ Date.prototype.yyyymmdd = function() {
 
 // Create user endpoint
 app.post('/create', function(req, res) {
-  	res.json({create: "This is the endpoint for creating a user."})
 
   	var nume = req.body.nume,
   		prenume = req.body.prenume,
@@ -55,6 +54,7 @@ app.post('/create', function(req, res) {
   		data_angajare = new Date().yyyymmdd(),
   		pozitie = req.body.pozitie,
   	    parola = req.body.parola;
+  	    sectie = req.body.sectie;
 
   	var con = mysql.createConnection({
 	  //host: "34.65.30.185", // This does not work on App Engine
@@ -69,19 +69,19 @@ app.post('/create', function(req, res) {
 	  console.log("Connected!");
 	});
 
-	var sql = "INSERT INTO angajati (nume, prenume, data_nastere, sex, adresa, telefon, email, CNP, data_angajare, pozitie, parola) values (\"" + nume + "\",\"" + prenume + "\",\"" + data_nastere + "\",\"" + sex + "\",\"" + adresa + "\",\"" + telefon + "\",\"" + email + "\",\"" + cnp + "\",\"" + data_angajare + "\",\"" + pozitie + "\",\"" + parola + "\")";
+	var sql = "INSERT INTO angajati (nume, prenume, data_nastere, sex, adresa, telefon, email, CNP, data_angajare, pozitie, parola, sectie) values (\"" + nume + "\",\"" + prenume + "\",\"" + data_nastere + "\",\"" + sex + "\",\"" + adresa + "\",\"" + telefon + "\",\"" + email + "\",\"" + cnp + "\",\"" + data_angajare + "\",\"" + pozitie + "\",\"" + parola + "\",\"" + sectie + "\")";
 	console.log(sql);
 
 	
 	con.query(sql, function (err, result) {
 	    if (err) throw err;
 	    console.log("Result: " + result);
+	    res.json({result: "Succes"});
 	  });
 
 })
 
 app.post('/login_angajat', function(req, res) {
-	res.json({login_angajat: "This is the endpoint for login in staff."})
 
 	var email = req.body.email,
 	parola = req.body.parola;
@@ -98,12 +98,33 @@ app.post('/login_angajat', function(req, res) {
 		  console.log("Connected!");
 		});
 
-	var sql = "SELECT * FROM angajati where email = \"" + email +"\" AND parola=\"" + parola + "\"";
+
+	var sql = "SELECT * FROM administratori where email = \"" + email +"\" AND parola=\"" + parola + "\"";
 	console.log(sql);
 
 	con.query(sql, function (err, result) {
 	    if (err) throw err;
-	    console.log("Result: " + result);
-	    res.write(result);
+	    console.log("Result: " + result.length);
+	    if (result.length == 0) {
+	    	sql = "SELECT * FROM angajati where email = \"" + email +"\" AND parola=\"" + parola + "\"";
+			console.log(sql);
+
+			con.query(sql, function (err, result) {
+			    if (err) throw err;
+			    console.log("Result: " + result.length);
+			    if (result.length == 0) {
+			    	sql = "SELECT * FROM pacienti where email = \"" + email +"\" AND parola=\"" + parola + "\"";
+					console.log(sql);
+
+					con.query(sql, function (err, result) {
+					    if (err) throw err;
+					    console.log("Result: " + result.length);
+					    if (result.length == 0) res.json({result: 'inexistent'});
+					    else { res.json( {result: result} );}
+					});
+			    }
+			    else { res.json( {result: result} );}
+			});
+	    } else res.json( {result: result} );
 	});
 })
