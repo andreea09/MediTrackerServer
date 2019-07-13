@@ -79,3 +79,31 @@ app.post('/create', function(req, res) {
 	  });
 
 })
+
+app.post('/login_angajat', function(req, res) {
+	res.json({login_angajat: "This is the endpoint for login in staff."})
+
+	var email = req.body.email,
+	parola = req.body.parola;
+
+	var con = mysql.createConnection({
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+		  if (err) throw err;
+		  console.log("Connected!");
+		});
+
+	var sql = "SELECT * FROM angajati where email = \"" + email +"\" AND parola=\"" + parola + "\"";
+	console.log(sql);
+
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    console.log("Result: " + result);
+	    res.write(result);
+	});
+})
