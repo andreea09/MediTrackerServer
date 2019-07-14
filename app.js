@@ -136,7 +136,7 @@ app.post('/pacient/creare', function(req, res) {
 		if (err) throw err;
 		console.log("Verificare existenta");
 		if (result.length == 0){
-			sql = "INSERT INTO pacienti (nume, prenume, data_nastere, sex, adresa, telefon, email, CNP, dizabilitati, asigurat, costuri_existente, salon, pat, parola, internat) values (\"" + nume + "\",\"" + prenume + "\",\"" + data_nastere + "\",\"" + sex + "\",\"" + adresa + "\",\"" + telefon + "\",\"" + email + "\",\"" + CNP + "\",\"" + dizabilitati + "\",\"" + asigurat + "\",\"" + costuri_existente + "\",\"" + salon + "\",\""  + pat + "\",\"" + parola + "\",\"" + internat + "\")";
+			sql = "INSERT INTO pacienti (nume, prenume, data_nastere, sex, adresa, telefon, email, CNP, dizabilitati, asigurat, costuri_existente, salon, pat, parola, internat) values (\"" + nume + "\",\"" + prenume + "\",\"" + data_nastere + "\",\"" + sex + "\",\"" + adresa + "\",\"" + telefon + "\",\"" + email + "\",\"" + CNP + "\",\'" + dizabilitati + "\',b\'" + asigurat + "\',\"" + costuri_existente + "\",\"" + salon + "\",\""  + pat + "\",\"" + parola + "\",b\'" + internat + "\')";
 			console.log(sql);
 			
 			con.query(sql, function (err, result) {
@@ -275,7 +275,7 @@ app.post('/pacient/update', function(req, res) {
 	  console.log("Connected!");
 	});
 
-	var sql = "UPDATE pacienti SET nume = \"" + nume + "\", prenume = \"" + prenume + "\", data_nastere = \"" + data_nastere + "\", sex = \"" + sex + "\", adresa = \"" + adresa + "\", telefon = \"" + telefon + "\", email = \"" + email + "\", CNP = \"" + CNP + "\", internat = \"" + internat + "\", asigurat = \"" + asigurat + "\", dizabilitati = \"" + dizabilitati + "\", costuri_existente = \"" + costuri_existente + "\", parola = \"" + parola + "\", salon = \"" + salon + "\", pat = \"" + pat + "\" WHERE pacientID = \"" + pacientID +"\"";
+	var sql = "UPDATE pacienti SET nume = \"" + nume + "\", prenume = \"" + prenume + "\", data_nastere = \"" + data_nastere + "\", sex = \"" + sex + "\", adresa = \"" + adresa + "\", telefon = \"" + telefon + "\", email = \"" + email + "\", CNP = \"" + CNP + "\", internat = b\'" + internat + "\', asigurat = b\'" + asigurat + "\', dizabilitati = \"" + dizabilitati + "\", costuri_existente = \"" + costuri_existente + "\", parola = \"" + parola + "\", salon = \"" + salon + "\", pat = \"" + pat + "\" WHERE pacientID = \"" + pacientID +"\"";
 	console.log(sql);
 		
 	con.query(sql, function (err, result) {
@@ -285,7 +285,32 @@ app.post('/pacient/update', function(req, res) {
 	});
 })
 
-app.post('')
+app.post('/angajat/cautare', function(req, res) {
+	var sectie = req.body.sectie;
+
+  	var con = mysql.createConnection({
+	  //host: "34.65.30.185", // This does not work on App Engine
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+	  if (err) throw err;
+	  console.log("Connected!");
+	})
+
+	var sql = "SELECT nume, prenume, angajatID FROM angajati WHERE pozitie = \"Medic\" AND sectie = " + sectie + "\"";
+
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    console.log("Result: " + result.length);
+	    if (result.length == 0) res.json({result: 'inexistent'});
+	    else { res.json( {result: result} );}
+	});
+
+})
 
 
 app.post('/angajat/update', function(req, res) {
