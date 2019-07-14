@@ -58,6 +58,7 @@ app.post('/create', function(req, res) {
 
   	if (data_angajare == 'NaN-NaN-NaN' || data_nastere == 'NaN-NaN-NaN'){
   		res.json({result: "Detalii Invalide"});
+  		return ;
   	}
 
   	var con = mysql.createConnection({
@@ -90,9 +91,67 @@ app.post('/create', function(req, res) {
 			res.json({result: "Email deja utilizat"});
 		}
 	})
-
-
 })
+
+// Create pacient endpoint
+app.post('/pacient/creare', function(req, res) {
+
+  	var nume = req.body.nume,
+  		prenume = req.body.prenume,
+  		data_nastere = new Date(req.body.data_nastere).yyyymmdd(),
+  		sex = req.body.sex,
+  		adresa = req.body.adresa,
+  		telefon = req.body.telefon,
+  		email = req.body.email,
+  		CNP = req.body.CNP,
+  		data_internare = new Date().yyyymmdd(),
+  		asigurat = req.body.asigurat,
+  		dizabilitati = req.body.dizabilitati,
+  		costuri_existente = 0,
+  	    parola = req.body.parola,
+  	    salon = req.body.salon,
+  	    pat = req.body.pat;
+
+
+
+  	if (data_nastere == 'NaN-NaN-NaN'){
+  		res.json({result: "Detalii Invalide"});
+  		return ;
+  	}
+  	console.log(data_nastere);
+
+  	var con = mysql.createConnection({
+	  //host: "34.65.30.185", // This does not work on App Engine
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+	  if (err) throw err;
+	  console.log("Connected!");
+	});
+
+	var sql = "SELECT email FROM pacienti where CNP = \"" + CNP +"\"";
+	con.query(sql, function(err, result) {
+		if (err) throw err;
+		console.log("Verificare existenta");
+		if (result.length == 0){
+			sql = "INSERT INTO pacienti (nume, prenume, data_nastere, sex, adresa, telefon, email, CNP, data_internare, dizabilitati, asigurat, costuri_existente, salon, pat, parola) values (\"" + nume + "\",\"" + prenume + "\",\"" + data_nastere + "\",\"" + sex + "\",\"" + adresa + "\",\"" + telefon + "\",\"" + email + "\",\"" + CNP + "\",\"" + data_internare + "\",\"" + dizabilitati + "\",\"" + asigurat + "\",\"" + costuri_existente + "\",\"" + salon + "\",\""  + pat + "\",\"" + parola + "\")";
+			console.log(sql);
+			
+			con.query(sql, function (err, result) {
+			    if (err) throw err;
+			    console.log("Result: " + result);
+			    res.json({result: "Succes"});
+			  });
+		} else {
+			res.json({result: "Pacient deja existent"});
+		}
+	})
+})
+
 
 app.post('/login_angajat', function(req, res) {
 
@@ -248,6 +307,31 @@ app.post('/pacient/diagnostic', function(req, res){
 	});
 })
 
+
+app.post('/pacient/istoric', function(req, res){
+	var pacientID = req.body.pacientID;
+
+	var con = mysql.createConnection({
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+		if (err) throw err;
+		console.log("Connected!");
+	});
+
+	var sql = "SELECT * FROM diagnostice WHERE pacientID = \"" + pacientID + "\"";
+
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    console.log("Result: " + result.length);
+	    if (result.length == 0) res.json({result: 'inexistent'});
+	    else { res.json( {result: result} ); }
+	});
+})
 
 app.post('/pacient/diagnostic/observatii/creare', function(req, res){
 	var pacientCNP = req.body.pacientCNP,
