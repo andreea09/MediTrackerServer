@@ -104,8 +104,6 @@ app.post('/pacient/creare', function(req, res) {
   		telefon = req.body.telefon,
   		email = req.body.email,
   		CNP = req.body.CNP,
-  		data_internare = new Date().yyyymmdd(),
-  		zile_internare = req.body.zile_internare,
   		internat = req.body.internat,
   		asigurat = req.body.asigurat,
   		dizabilitati = req.body.dizabilitati,
@@ -138,7 +136,7 @@ app.post('/pacient/creare', function(req, res) {
 		if (err) throw err;
 		console.log("Verificare existenta");
 		if (result.length == 0){
-			sql = "INSERT INTO pacienti (nume, prenume, data_nastere, sex, adresa, telefon, email, CNP, data_internare, dizabilitati, asigurat, costuri_existente, salon, pat, parola, zile_internare, internat) values (\"" + nume + "\",\"" + prenume + "\",\"" + data_nastere + "\",\"" + sex + "\",\"" + adresa + "\",\"" + telefon + "\",\"" + email + "\",\"" + CNP + "\",\"" + data_internare + "\",\"" + dizabilitati + "\",\"" + asigurat + "\",\"" + costuri_existente + "\",\"" + salon + "\",\""  + pat + "\",\"" + parola + "\",\"" + zile_internare + "\",\"" + internat + "\")";
+			sql = "INSERT INTO pacienti (nume, prenume, data_nastere, sex, adresa, telefon, email, CNP, dizabilitati, asigurat, costuri_existente, salon, pat, parola, internat) values (\"" + nume + "\",\"" + prenume + "\",\"" + data_nastere + "\",\"" + sex + "\",\"" + adresa + "\",\"" + telefon + "\",\"" + email + "\",\"" + CNP + "\",\"" + dizabilitati + "\",\"" + asigurat + "\",\"" + costuri_existente + "\",\"" + salon + "\",\""  + pat + "\",\"" + parola + "\",\"" + internat + "\")";
 			console.log(sql);
 			
 			con.query(sql, function (err, result) {
@@ -250,8 +248,6 @@ app.post('/pacient/update', function(req, res) {
   		telefon = req.body.telefon,
   		email = req.body.email,
   		CNP = req.body.CNP,
-  		data_internare = new Date(req.body.data_internare).yyyymmdd(),
-  		zile_internare = req.body.zile_internare,
   		internat = req.body.internat,
   		asigurat = req.body.asigurat,
   		dizabilitati = req.body.dizabilitati,
@@ -260,7 +256,7 @@ app.post('/pacient/update', function(req, res) {
   	    salon = req.body.salon,
   	    pat = req.body.pat;
 
-  	if (data_nastere == 'NaN-NaN-NaN' || data_internare == 'NaN-NaN-NaN'){
+  	if (data_nastere == 'NaN-NaN-NaN'){
   		res.json({result: "Detalii Invalide"});
   		return ;
   	}
@@ -279,7 +275,7 @@ app.post('/pacient/update', function(req, res) {
 	  console.log("Connected!");
 	});
 
-	var sql = "UPDATE pacienti SET nume = \"" + nume + "\", prenume = \"" + prenume + "\", data_nastere = \"" + data_nastere + "\", sex = \"" + sex + "\", adresa = \"" + adresa + "\", telefon = \"" + telefon + "\", email = \"" + email + "\", CNP = \"" + CNP + "\", data_internare = \"" + data_internare + "\", zile_internare = \"" + zile_internare + "\", internat = \"" + internat + "\", asigurat = \"" + asigurat + "\", dizabilitati = \"" + dizabilitati + "\", costuri_existente = \"" + costuri_existente + "\", parola = \"" + parola + "\", salon = \"" + salon + "\", pat = \"" + pat + "\" WHERE pacientID = \"" + pacientID +"\"";
+	var sql = "UPDATE pacienti SET nume = \"" + nume + "\", prenume = \"" + prenume + "\", data_nastere = \"" + data_nastere + "\", sex = \"" + sex + "\", adresa = \"" + adresa + "\", telefon = \"" + telefon + "\", email = \"" + email + "\", CNP = \"" + CNP + "\", internat = \"" + internat + "\", asigurat = \"" + asigurat + "\", dizabilitati = \"" + dizabilitati + "\", costuri_existente = \"" + costuri_existente + "\", parola = \"" + parola + "\", salon = \"" + salon + "\", pat = \"" + pat + "\" WHERE pacientID = \"" + pacientID +"\"";
 	console.log(sql);
 		
 	con.query(sql, function (err, result) {
@@ -310,7 +306,6 @@ app.post('/angajat/update', function(req, res) {
   		res.json({result: "Detalii Invalide"});
   		return ;
   	}
-  	console.log(data_nastere);
 
   	var con = mysql.createConnection({
 	  //host: "34.65.30.185", // This does not work on App Engine
@@ -367,8 +362,14 @@ app.post('/pacient/diagnostic', function(req, res){
 		descriere = req.body.descriere,
 		durata = req.body.durata,
 		indicatii_suplimentare = req.body.indicatii_suplimentare,
+		data_internare = new Date(req.body.data_internare).yyyymmdd(),
+		zile_internare = req.body.zile_internare,
 		incepere_tratament = new Date(req.body.incepere_tratament).yyyymmdd();
-
+	
+  	if (incepere_tratament == 'NaN-NaN-NaN' || data_internare == 'NaN-NaN-NaN'){
+  		res.json({result: "Detalii Invalide"});
+  		return ;
+  	}
 
 	var con = mysql.createConnection({
 	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
@@ -405,7 +406,7 @@ app.post('/pacient/diagnostic', function(req, res){
 	    var diagnosticID = result_json.diagnosticID;
 
 	    // Adauga tratamentul pentru diagnostic, folosind diagnosticID
-		sql = "INSERT INTO tratamente (diagnosticID, angajatID, indicatii_suplimentare, pacientID, durata, incepere_tratament) values (\"" + diagnosticID + "\",\"" + angajatID + "\",\"" + indicatii_suplimentare + "\",\"" + pacientID + "\",\"" + durata + "\",\"" + incepere_tratament + "\")";
+		sql = "INSERT INTO tratamente (diagnosticID, angajatID, indicatii_suplimentare, pacientID, durata, incepere_tratament, durata_internare, zile_internare) values (\"" + diagnosticID + "\",\"" + angajatID + "\",\"" + indicatii_suplimentare + "\",\"" + pacientID + "\",\"" + durata + "\",\"" + incepere_tratament + "\",\"" + data_internare + "\",\"" + zile_internare + "\")";
 		console.log(sql);
 		
 		con.query(sql, function (err, result) {
