@@ -133,12 +133,12 @@ app.post('/login_angajat', function(req, res) {
 					    if (err) throw err;
 					    console.log("Result: " + result.length);
 					    if (result.length == 0) res.json({result: 'inexistent'});
-					    else { res.json( {result: result} );}
+					    else { res.json( {result: result, tip: "pacient"} );}
 					});
 			    }
-			    else { res.json( {result: result} );}
+			    else { res.json( {result: result, tip: "angajat"} );}
 			});
-	    } else res.json( {result: result} );
+	    } else res.json( {result: result, tip: "administrator"} );
 	});
 })
 
