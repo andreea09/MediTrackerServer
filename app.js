@@ -285,6 +285,8 @@ app.post('/pacient/update', function(req, res) {
 	});
 })
 
+app.post('')
+
 
 app.post('/angajat/update', function(req, res) {
   	var angajatID = req.body.angajatID,
@@ -331,9 +333,7 @@ app.post('/angajat/update', function(req, res) {
 })
 
 app.post('/pacient/cautare', function(req, res) {
-	var nume = req.body.nume,
-		prenume = req.body.prenume;
-
+	var CNP = req.body.CNP;
 
 	var con = mysql.createConnection({
 	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
@@ -347,12 +347,56 @@ app.post('/pacient/cautare', function(req, res) {
 		console.log("Connected!");
 	});
 
-	var sql = "SELECT * FROM pacienti where nume = \"" + nume +"\" AND prenume=\"" + prenume + "\"";
+	var sql = "SELECT * FROM pacienti where CNP = \"" + CNP +"\"";
 	con.query(sql, function (err, result) {
 	    if (err) throw err;
 	    console.log("Result: " + result.length);
 	    if (result.length == 0) res.json({result: 'inexistent'});
 	    else { res.json( {result: result} );}
+	});
+})
+
+app.post('/pacient/stergere', function(req, res) {
+	var CNP = req.body.CNP;
+
+	var con = mysql.createConnection({
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+		if (err) throw err;
+		console.log("Connected!");
+	});
+
+	var sql = "DELETE FROM pacienti where CNP = \"" + CNP +"\"";
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    res.json( {result: result} );
+	});
+})
+
+app.post('/angajat/stergere', function(req, res) {
+	var angajatID = req.body.angajatID;
+
+	var con = mysql.createConnection({
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+		if (err) throw err;
+		console.log("Connected!");
+	});
+
+	var sql = "DELETE FROM angajati where angajatID = \"" + angajatID +"\"";
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    res.json( {result: result} );
 	});
 })
 
