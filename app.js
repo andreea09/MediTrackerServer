@@ -168,7 +168,7 @@ app.post('/pacient/cautare', function(req, res) {
 	});
 })
 
-app.post('/pacient/diagnostic/creare', function(req, res){
+app.post('/pacient/diagnostic', function(req, res){
 	var pacientID = req.body.pacientID,
 		angajatID = req.body.angajatID,
 		descriere = req.body.descriere,
@@ -246,5 +246,66 @@ app.post('/pacient/diagnostic/creare', function(req, res){
 			});
 		});
 	});
+})
 
+
+app.post('/pacient/diagnostic/observatii/creare', function(req, res){
+	var pacientCNP = req.body.pacientCNP,
+		angajatID = req.body.angajatID,
+		diagnosticID = req.body.diagnosticID,
+		continut = req.body.continut,
+		sectie = req.body.sectie,
+		data_ora = new Date().yyyymmdd();
+
+	var con = mysql.createConnection({
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+		if (err) throw err;
+		console.log("Connected!");
+	});
+
+	// "DiagnoticID" - typo in baza de date..nu reusesc sa alterez tabelul, m-am lasat dupa 30 minute
+	var sql = "INSERT INTO observatii (diagnoticID, angajatID, pacientCNP, continut, sectie, data_ora) values (\"" + diagnosticID + "\",\"" + angajatID + "\",\"" + pacientCNP + "\",\"" + continut + "\",\"" + sectie + "\",\"" + data_ora + "\")";
+	console.log(sql);
+		
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    var result_json = JSON.stringify(result);
+	    console.log("Result: " + result_json);
+		res.json({result: "Succes"});
+	});
+})
+
+
+app.post('/pacient/diagnostic/observatii', function(req, res){
+	var pacientCNP = req.body.pacientCNP,
+		diagnosticID = req.body.diagnosticID;
+
+	var con = mysql.createConnection({
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+		if (err) throw err;
+		console.log("Connected!");
+	});
+
+	// "DiagnoticID" - typo in baza de date..nu reusesc sa alterez tabelul, m-am lasat dupa 30 minute
+	var sql = "SELECT * FROM observatii where pacientCNP=\"" + pacientCNP + "\" AND diagnoticID=\"" + diagnosticID + "\"";
+	console.log(sql);
+		
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    var result_json = JSON.stringify(result);
+	    console.log("Result: " + result_json);
+		res.json({result: result});
+	});
 })
