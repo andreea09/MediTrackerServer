@@ -237,6 +237,8 @@ app.post('/login_angajat', function(req, res) {
 	});
 })
 
+
+
 app.post('/pacient/update', function(req, res) {
 
   	var pacientID = req.body.pacientID,
@@ -373,6 +375,30 @@ app.post('/pacient/cautare', function(req, res) {
 	});
 
 	var sql = "SELECT * FROM pacienti where CNP = \"" + CNP +"\"";
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    console.log("Result: " + result.length);
+	    if (result.length == 0) res.json({result: 'inexistent'});
+	    else { res.json( {result: result} );}
+	});
+})
+
+app.post('/pacient/cautareID', function(req, res) {
+	var pacientID = req.body.pacientID;
+
+	var con = mysql.createConnection({
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+		if (err) throw err;
+		console.log("Connected!");
+	});
+
+	var sql = "SELECT * FROM pacienti where pacientID = \"" + pacientID +"\"";
 	con.query(sql, function (err, result) {
 	    if (err) throw err;
 	    console.log("Result: " + result.length);
@@ -557,7 +583,6 @@ app.post('/pacient/diagnostic/observatii/creare', function(req, res){
 		console.log("Connected!");
 	});
 
-	// "DiagnoticID" - typo in baza de date..nu reusesc sa alterez tabelul, m-am lasat dupa 30 minute
 	var sql = "INSERT INTO observatii (diagnosticID, angajatID, pacientCNP, continut, sectie, data_ora) values (\"" + diagnosticID + "\",\"" + angajatID + "\",\"" + pacientCNP + "\",\"" + continut + "\",\"" + sectie + "\",\"" + data_ora + "\")";
 	console.log(sql);
 		
@@ -612,7 +637,6 @@ app.post('/pacient/diagnostic/observatii', function(req, res){
 		console.log("Connected!");
 	});
 
-	// "DiagnoticID" - typo in baza de date..nu reusesc sa alterez tabelul, m-am lasat dupa 30 minute
 	var sql = "SELECT * FROM observatii where pacientCNP=\"" + pacientCNP + "\" AND diagnosticID=\"" + diagnosticID + "\"";
 	console.log(sql);
 		
@@ -625,7 +649,7 @@ app.post('/pacient/diagnostic/observatii', function(req, res){
 })
 
 app.post('/angajat/sectie/observatii', function(req, res){
-	var sectie = req.body.sectie,
+	var sectie = req.body.sectie;
 
 	var con = mysql.createConnection({
 	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
@@ -639,7 +663,7 @@ app.post('/angajat/sectie/observatii', function(req, res){
 		console.log("Connected!");
 	});
 
-	var sql = "SELECT * FROM observatii where sectie=\"" + sectie+ "\"";
+	var sql = "SELECT * FROM observatii where sectie=\"" + sectie + "\"";
 	console.log(sql);
 		
 	con.query(sql, function (err, result) {
@@ -649,6 +673,60 @@ app.post('/angajat/sectie/observatii', function(req, res){
 		res.json({result: result});
 	});
 })
+
+
+app.post('/angajat/observatii', function(req, res){
+	var angajatID = req.body.angajatID;
+
+	var con = mysql.createConnection({
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+		if (err) throw err;
+		console.log("Connected!");
+	});
+
+	var sql = "SELECT diagnosticID, pacientCNP FROM observatii where angajatID=\"" + angajatID + "\"";
+	console.log(sql);
+		
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    var result_json = JSON.stringify(result);
+	    console.log("Result: " + result_json);
+		res.json({result: result});
+	});
+})
+
+app.post('/angajat/diagnostic', function(req, res){
+	var angajatID = req.body.angajatID;
+
+	var con = mysql.createConnection({
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+		if (err) throw err;
+		console.log("Connected!");
+	});
+
+	var sql = "SELECT diagnosticID, pacientID FROM diagnostice where angajatID=\"" + angajatID + "\"";
+	console.log(sql);
+		
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    var result_json = JSON.stringify(result);
+	    console.log("Result: " + result_json);
+		res.json({result: result});
+	});
+})
+
 
 app.post('/angajat/pacienti', function(req, res){
 	var angajatID = req.body.angajatID;
