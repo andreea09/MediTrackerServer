@@ -231,7 +231,15 @@ app.post('/login_angajat', function(req, res) {
 					    else { res.json( {result: result, tip: "pacient"} );}
 					});
 			    }
-			    else { res.json( {result: result, tip: "angajat"} );}
+			    else { 
+
+				    var result_json = JSON.stringify(result).slice(1);
+				    result_json = result_json.slice(0, result_json.length - 1);
+				    result_json = JSON.parse(result_json);
+				    console.log(result_json.data_angajare);
+				    if (result_json.data_angajare.includes('1000-01-01')) res.json({result: 'inexistent'});
+			    	else res.json( {result: result, tip: "angajat"} );
+			    }
 			});
 	    } else res.json( {result: result, tip: "administrator"} );
 	});
@@ -303,15 +311,16 @@ app.post('/angajat/cautare', function(req, res) {
 	  console.log("Connected!");
 	})
 
-	var sql = "SELECT nume, prenume, angajatID FROM angajati WHERE pozitie = \"Medic\" AND sectie = \"" + sectie + "\"";
+	var sql = "SELECT nume, prenume, angajatID FROM angajati WHERE pozitie = \"Medic\" AND sectie = \"" + sectie + "\" AND data_angajare > '01/01/1000'";
 
 	con.query(sql, function (err, result) {
 	    if (err) throw err;
 	    console.log("Result: " + result.length);
 	    if (result.length == 0) res.json({result: 'inexistent'});
-	    else { res.json( {result: result} );}
+	    else {
+	    	res.json( {result: result} );
+	    }
 	});
-
 })
 
 
@@ -407,28 +416,6 @@ app.post('/pacient/cautareID', function(req, res) {
 	});
 })
 
-app.post('/pacient/stergere', function(req, res) {
-	var CNP = req.body.CNP;
-
-	var con = mysql.createConnection({
-	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
-	  user: "server",
-	  password: "sherlock2014",
-	  database: "spital"
-	});
-
-	con.connect(function(err) {
-		if (err) throw err;
-		console.log("Connected!");
-	});
-
-	var sql = "DELETE FROM pacienti where CNP = \"" + CNP +"\"";
-	con.query(sql, function (err, result) {
-	    if (err) throw err;
-	    res.json( {result: result} );
-	});
-})
-
 app.post('/angajat/stergere', function(req, res) {
 	var angajatID = req.body.angajatID;
 
@@ -444,7 +431,7 @@ app.post('/angajat/stergere', function(req, res) {
 		console.log("Connected!");
 	});
 
-	var sql = "DELETE FROM angajati where angajatID = \"" + angajatID +"\"";
+	var sql = "UPDATE angajati SET data_angajare = '1000-01-01' WHERE angajatID = \"" + angajatID +"\"";
 	con.query(sql, function (err, result) {
 	    if (err) throw err;
 	    res.json( {result: result} );
@@ -595,7 +582,7 @@ app.post('/pacient/diagnostic/observatii/creare', function(req, res){
 })
 
 app.post('/pacient/diagnostic/tratament', function(req, res){
-	var pacientCNP = req.body.pacientCNP,
+	var pacientID = req.body.pacientID,
 		diagnosticID = req.body.diagnosticID;
 
 	var con = mysql.createConnection({
@@ -610,7 +597,7 @@ app.post('/pacient/diagnostic/tratament', function(req, res){
 		console.log("Connected!");
 	});
 
-	var sql = "SELECT * FROM tratamente where pacientCNP=\"" + pacientCNP + "\" AND diagnosticID=\"" + diagnosticID + "\"";
+	var sql = "SELECT * FROM tratamente where pacientID=\"" + pacientID + "\" AND diagnosticID=\"" + diagnosticID + "\"";
 	console.log(sql);
 		
 	con.query(sql, function (err, result) {
