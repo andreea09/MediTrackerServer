@@ -716,7 +716,7 @@ app.post('/angajat/diagnostic', function(req, res){
 		console.log("Connected!");
 	});
 
-	var sql = "SELECT diagnosticID, pacientID FROM diagnostice where angajatID=\"" + angajatID + "\"";
+	var sql = "SELECT * FROM diagnostice where angajatID=\"" + angajatID + "\"";
 	console.log(sql);
 		
 	con.query(sql, function (err, result) {
