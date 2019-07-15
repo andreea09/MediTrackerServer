@@ -301,7 +301,7 @@ app.post('/angajat/cautare', function(req, res) {
 	  console.log("Connected!");
 	})
 
-	var sql = "SELECT nume, prenume, angajatID FROM angajati WHERE pozitie = \"Medic\" AND sectie = " + sectie + "\"";
+	var sql = "SELECT nume, prenume, angajatID FROM angajati WHERE pozitie = \"Medic\" AND sectie = \"" + sectie + "\"";
 
 	con.query(sql, function (err, result) {
 	    if (err) throw err;
@@ -434,7 +434,7 @@ app.post('/pacient/diagnostic', function(req, res){
 		data_internare = new Date(req.body.data_internare).yyyymmdd(),
 		zile_internare = req.body.zile_internare,
 		incepere_tratament = new Date(req.body.incepere_tratament).yyyymmdd();
-	
+
   	if (incepere_tratament == 'NaN-NaN-NaN' || data_internare == 'NaN-NaN-NaN'){
   		res.json({result: "Detalii Invalide"});
   		return ;
@@ -475,7 +475,7 @@ app.post('/pacient/diagnostic', function(req, res){
 	    var diagnosticID = result_json.diagnosticID;
 
 	    // Adauga tratamentul pentru diagnostic, folosind diagnosticID
-		sql = "INSERT INTO tratamente (diagnosticID, angajatID, indicatii_suplimentare, pacientID, durata, incepere_tratament, durata_internare, zile_internare) values (\"" + diagnosticID + "\",\"" + angajatID + "\",\"" + indicatii_suplimentare + "\",\"" + pacientID + "\",\"" + durata + "\",\"" + incepere_tratament + "\",\"" + data_internare + "\",\"" + zile_internare + "\")";
+		sql = "INSERT INTO tratamente (diagnosticID, angajatID, indicatii_suplimentare, pacientID, durata, incepere_tratament, data_internare, zile_internare) values (\"" + diagnosticID + "\",\"" + angajatID + "\",\"" + indicatii_suplimentare + "\",\"" + pacientID + "\",\"" + durata + "\",\"" + incepere_tratament + "\",\"" + data_internare + "\",\"" + zile_internare + "\")";
 		console.log(sql);
 		
 		con.query(sql, function (err, result) {
@@ -498,7 +498,7 @@ app.post('/pacient/diagnostic', function(req, res){
 			var tratamentID = result_json.tratamentID;
 
 			// Adauga tratamentID diagnosticului adaugat inainte
-			sql = "UPDATE diagnostice SET tratamentID = \"" + tratamentID + "\"";
+			sql = "UPDATE diagnostice SET tratamentID = \"" + tratamentID + "\" WHERE diagnosticID = \"" + diagnosticID + "\"";
 			console.log(sql);
 
 			con.query(sql, function (err, result) {
@@ -558,7 +558,7 @@ app.post('/pacient/diagnostic/observatii/creare', function(req, res){
 	});
 
 	// "DiagnoticID" - typo in baza de date..nu reusesc sa alterez tabelul, m-am lasat dupa 30 minute
-	var sql = "INSERT INTO observatii (diagnoticID, angajatID, pacientCNP, continut, sectie, data_ora) values (\"" + diagnosticID + "\",\"" + angajatID + "\",\"" + pacientCNP + "\",\"" + continut + "\",\"" + sectie + "\",\"" + data_ora + "\")";
+	var sql = "INSERT INTO observatii (diagnosticID, angajatID, pacientCNP, continut, sectie, data_ora) values (\"" + diagnosticID + "\",\"" + angajatID + "\",\"" + pacientCNP + "\",\"" + continut + "\",\"" + sectie + "\",\"" + data_ora + "\")";
 	console.log(sql);
 		
 	con.query(sql, function (err, result) {
@@ -569,6 +569,32 @@ app.post('/pacient/diagnostic/observatii/creare', function(req, res){
 	});
 })
 
+app.post('/pacient/diagnostic/tratament', function(req, res){
+	var pacientCNP = req.body.pacientCNP,
+		diagnosticID = req.body.diagnosticID;
+
+	var con = mysql.createConnection({
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+		if (err) throw err;
+		console.log("Connected!");
+	});
+
+	var sql = "SELECT * FROM tratamente where pacientCNP=\"" + pacientCNP + "\" AND diagnosticID=\"" + diagnosticID + "\"";
+	console.log(sql);
+		
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    var result_json = JSON.stringify(result);
+	    console.log("Result: " + result_json);
+		res.json({result: result});
+	});
+})
 
 app.post('/pacient/diagnostic/observatii', function(req, res){
 	var pacientCNP = req.body.pacientCNP,
@@ -587,7 +613,7 @@ app.post('/pacient/diagnostic/observatii', function(req, res){
 	});
 
 	// "DiagnoticID" - typo in baza de date..nu reusesc sa alterez tabelul, m-am lasat dupa 30 minute
-	var sql = "SELECT * FROM observatii where pacientCNP=\"" + pacientCNP + "\" AND diagnoticID=\"" + diagnosticID + "\"";
+	var sql = "SELECT * FROM observatii where pacientCNP=\"" + pacientCNP + "\" AND diagnosticID=\"" + diagnosticID + "\"";
 	console.log(sql);
 		
 	con.query(sql, function (err, result) {
@@ -595,5 +621,56 @@ app.post('/pacient/diagnostic/observatii', function(req, res){
 	    var result_json = JSON.stringify(result);
 	    console.log("Result: " + result_json);
 		res.json({result: result});
+	});
+})
+
+app.post('/angajat/sectie/observatii', function(req, res){
+	var sectie = req.body.sectie,
+
+	var con = mysql.createConnection({
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+		if (err) throw err;
+		console.log("Connected!");
+	});
+
+	var sql = "SELECT * FROM observatii where sectie=\"" + sectie+ "\"";
+	console.log(sql);
+		
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    var result_json = JSON.stringify(result);
+	    console.log("Result: " + result_json);
+		res.json({result: result});
+	});
+})
+
+app.post('/angajat/pacienti', function(req, res){
+	var angajatID = req.body.angajatID;
+
+	var con = mysql.createConnection({
+	  socketPath: "/cloudsql/scenic-hydra-241121:europe-west6:spital-license", // format required for App Engine
+	  user: "server",
+	  password: "sherlock2014",
+	  database: "spital"
+	});
+
+	con.connect(function(err) {
+		if (err) throw err;
+		console.log("Connected!");
+	});
+
+	var sql = "SELECT * FROM pacienti WHERE angajatID = \"" + angajatID + "\"";
+
+	con.query(sql, function (err, result) {
+	    if (err) throw err;
+	    console.log("Result: " + result.length);
+	    if (result.length == 0) res.json({result: 'inexistent'});
+	    else { res.json( {result: result} ); }
 	});
 })
